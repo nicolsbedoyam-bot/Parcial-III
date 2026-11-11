@@ -1,9 +1,0 @@
-package co.edu.uniquindio.Parcial3;
-
-public record ComprobanteEntrega(String codigoEntrega, String identificacionAportante, int pesoTotalKg, double valorTotal) {
-
-    @Override
-    public String toString(){
-        return "ComprobanteEntrega:" + codigoEntrega + "-" + identificacionAportante + "-" + pesoTotalKg + "-" + valorTotal;
-    }
-}

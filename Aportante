@@ -1,9 +1,0 @@
-package co.edu.uniquindio.Parcial3;
-
-public record Aportante(String identificacion, String nombre, String correo) {
-
-    @Override
-    public String toString(){
-        return "Aportante:" + identificacion + "-" + nombre + "-" + correo;
-    }
-}
