@@ -1,0 +1,106 @@
+package co.edu.uniquindio.Parcial3;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDate;
+import java.util.List;
+import java.util.logging.Logger;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class EmpresaTest {
+
+    private static final Logger LOG= Logger.getLogger(EmpresaTest.class.getName());
+
+    private Empresa empresa;
+
+    @BeforeEach
+    void preparar(){
+
+        empresa= new Empresa("EcoRuta", "12334-5");
+        empresa.registrarAportante(new Aportante("1001", "Ana Gomez", "ana@gmail.com"));
+
+    }
+
+    @DisplayName("Prueba 3: rechazo entrega vacia")
+    @Test
+    void pruebaRechazoEntregaVacia(){
+
+        empresa.crearEntrega("E01", "1001", LocalDate.now());
+        Entrega e01= empresa.buscarEntrega("E01");
+
+        assertFalse(empresa.aceptarEntrega("E01"));
+        assertEquals(EstadoEntrega.ABIERTA, e01.getEstadoEntrega());
+        assertNull(e01.getComprobanteEntrega());
+    }
+    @Test
+    void rechazarEntregaInexistente(){
+        assertFalse(empresa.aceptarEntrega("E99"));
+    }
+
+    @DisplayName("Prueba 4: Aceptacion y calculo con los tres tipos de lote")
+    @Test
+    void pruebaCalculoLotes(){
+        assertEquals(6000, new LotePapelYCarton("L01", "Papel y carton clasificado", 10, true).calcularValor());
+        assertEquals(5000, new LotePapelYCarton("L02", "Papel y carton sin clasificar", 10, false).calcularValor());
+
+        assertEquals(11000, new LoteMetal("L03", "Aluminio", 5, TipoMetal.ALUMINIO).calcularValor());
+        assertEquals(2700, new LoteMetal("L04", "Acero", 3, TipoMetal.ACERO).calcularValor());
+
+        assertEquals(7200, new LoteResiduoElectronico("L05", "Residuos electronicos", 4, 2).calcularValor());
+        assertEquals(5600, new LoteResiduoElectronico("L06", "Residuos electronicos", 4, 0).calcularValor());
+    }
+    @Test
+    void pruebaAceptacionLotesYGerenacionComprobante(){
+        empresa.crearEntrega("E01", "1001", LocalDate.now());
+        empresa.agregarLote("E01", new LotePapelYCarton("L01", "Papel y carton clasificado", 10, true));
+        empresa.agregarLote("E01", new LoteMetal("L02", "Aluminio", 5, TipoMetal.ALUMINIO));
+        empresa.agregarLote("E01", new LoteResiduoElectronico("L03", "ResiduosElectronicos", 4, 2));
+
+        assertTrue(empresa.aceptarEntrega("E01"));
+
+        Entrega e01= empresa.buscarEntrega("E01");
+        ComprobanteEntrega comprobante= empresa.consultarComprobanteEntrega("E01");
+
+        assertEquals(EstadoEntrega.ACEPTADA, e01.getEstadoEntrega());
+        assertNotNull(comprobante);
+        assertEquals("E01", comprobante.codigoEntrega());
+        assertEquals("1001", comprobante.identificacionAportante());
+        assertEquals(19, comprobante.pesoTotalKg());
+        assertEquals(24200, comprobante.valorTotal());
+    }
+
+    @DisplayName("Prueba 5: Consulta de etiquetas")
+    @Test
+    void pruebaConsultaEtiquetas(){
+
+        empresa.crearEntrega("E01", "1001", LocalDate.now());
+        empresa.agregarLote("E01", new LotePapelYCarton("L01", "Papel y carton clasificado", 10, true));
+        empresa.agregarLote("E01", new LoteMetal("L02", "Aluminio", 5, TipoMetal.ALUMINIO));
+        empresa.agregarLote("E01", new LoteResiduoElectronico("L03", "Residuos electronicos", 4, 2));
+        empresa.aceptarEntrega("E01");
+
+        List<String> etiquetas = empresa.consultarEtiquetas("E01");
+
+        assertEquals(2, etiquetas.size());
+        assertTrue(etiquetas.get(0).contains("L02"));
+        assertTrue(etiquetas.get(0).contains("ALUMINIO"));
+        assertTrue(etiquetas.get(1).contains("L03"));
+        assertTrue(etiquetas.get(1).contains("2"));
+    }
+    @Test
+    void valorAcumuladoSumaSoloEntregasAceptadas() {
+
+        empresa.crearEntrega("E01", "1001", LocalDate.now());
+        empresa.agregarLote("E01", new LoteMetal("L01", "Aluminio", 5, TipoMetal.ALUMINIO));
+        empresa.aceptarEntrega("E01");
+        empresa.crearEntrega("E02", "1001", LocalDate.now());
+        empresa.agregarLote("E02", new LotePapelYCarton("L01", "Papel", 10, true));
+
+        assertEquals(11000, empresa.calcularValorAcumulado("1001"));
+        assertEquals(0, empresa.calcularValorAcumulado("9999"));
+    }
+
+}
