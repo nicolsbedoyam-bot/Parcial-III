@@ -1,4 +1,4 @@
-package co.edu.uniquindio.Parcial3;
+package co.edu.uniquindio.EcoRuta;
 
 public class LoteResiduoElectronico extends  Lote implements IEtiquetable{
 
