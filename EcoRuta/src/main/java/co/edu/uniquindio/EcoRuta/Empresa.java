@@ -89,8 +89,8 @@ public class Empresa {
         if (entrega == null) {
             return false;
         }
-        entrega.agregarLote(lote);
-        return true;
+       return entrega.agregarLote(lote);
+
     }
 
     public boolean aceptarEntrega(String codigoEntrega){
