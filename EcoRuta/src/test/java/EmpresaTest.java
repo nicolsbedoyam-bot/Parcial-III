@@ -1,5 +1,5 @@
+package co.edu.uniquindio.EcoRuta;
 
-import co.edu.uniquindio.EcoRuta.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,8 +9,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-// Pruebas funcionales de EcoRuta.
-// Cada prueba deja registrados: datos de entrada, resultado esperado y resultado obtenido.
 public class EmpresaTest {
 
     private Empresa empresa;
@@ -21,12 +19,19 @@ public class EmpresaTest {
     void preparar() {
         empresa = new Empresa();
         hoy = LocalDate.now();
-        aportante = new Aportante("1001", "Ana Gómez", "ana@correo.com");
+
+        aportante = new Aportante(
+                "1001",
+                "Ana Gómez",
+                "ana@correo.com"
+        );
+
         empresa.registrarAportante(aportante);
     }
 
-    // Muestra en consola los datos de cada prueba.
-    private void registrar(String prueba, String entrada, String esperado, String obtenido) {
+    private void registrar(String prueba, String entrada,
+                           String esperado, String obtenido) {
+
         System.out.println(prueba);
         System.out.println("  Entrada:  " + entrada);
         System.out.println("  Esperado: " + esperado);
@@ -34,6 +39,7 @@ public class EmpresaTest {
         System.out.println();
     }
 
+    // PRUEBA 1: Registro de una entrega
 
     @Test
     @DisplayName("Prueba 1: Registro de una entrega")
@@ -41,35 +47,33 @@ public class EmpresaTest {
 
         Entrega entrega = empresa.crearEntrega("E01", "1001", hoy);
 
-        // Que la entrega se haya creado.
         assertNotNull(entrega);
-        // Que comience en estado ABIERTA.
         assertEquals(EstadoEntrega.ABIERTA, entrega.getEstadoEntrega());
-        // Que comience sin lotes.
         assertEquals(0, entrega.getLotes().size());
-        // Que todavía no tenga comprobante.
         assertNull(entrega.getComprobanteEntrega());
 
-        // No debe permitir códigos de entrega repetidos.
+        // No permite códigos de entrega repetidos.
         assertThrows(IllegalArgumentException.class,
                 () -> empresa.crearEntrega("E01", "1001", hoy));
 
-        // No debe permitir aportantes desconocidos.
+        // No permite identificaciones desconocidas.
         assertThrows(IllegalArgumentException.class,
                 () -> empresa.crearEntrega("E02", "9999", hoy));
 
-        // E02 no debe existir y E01 debe conservarse.
         assertNull(empresa.buscarEntrega("E02"));
         assertSame(entrega, empresa.buscarEntrega("E01"));
 
-        registrar("PRUEBA 1: Registro de una entrega",
-                "crear E01 (aportante 1001); crear E01 otra vez; crear E02 con aportante 9999",
-                "E01 ABIERTA, 0 lotes, sin comprobante; las otras 2 operaciones rechazadas",
-                "E01 " + entrega.getEstadoEntrega() + ", " + entrega.getLotes().size()
-                        + " lotes, comprobante " + entrega.getComprobanteEntrega()
-                        + "; E02 existe: " + (empresa.buscarEntrega("E02") != null));
+        registrar(
+                "PRUEBA 1: Registro de una entrega",
+                "Crear E01; repetir E01; crear E02 con aportante desconocido",
+                "E01 creada y las otras dos operaciones rechazadas",
+                "Estado: " + entrega.getEstadoEntrega()
+                        + ", lotes: " + entrega.getLotes().size()
+                        + ", comprobante: " + entrega.getComprobanteEntrega()
+        );
     }
 
+    // PRUEBA 2: Validación de lotes
 
     @Test
     @DisplayName("Prueba 2: Validación de lotes")
@@ -77,110 +81,152 @@ public class EmpresaTest {
 
         Entrega entrega = empresa.crearEntrega("E01", "1001", hoy);
 
-        // Agregar el primer lote L01 con 5 kg.
-        assertTrue(empresa.agregarLote("E01", new LotePapelYCarton("L01", "Cajas", 5, false)));
+        // Agregar primer lote.
+        assertTrue(empresa.agregarLote(
+                "E01",
+                new LotePapelYCarton("L01", "Cajas", 5, false)
+        ));
 
-        // No debe permitir códigos de lote repetidos.
-        assertFalse(empresa.agregarLote("E01", new LotePapelYCarton("L01", "Otras cajas", 3, false)));
+        // Rechazar código de lote repetido.
+        assertFalse(empresa.agregarLote(
+                "E01",
+                new LotePapelYCarton("L01", "Otras cajas", 3, false)
+        ));
 
-        // No debe permitir lotes con peso igual a cero.
+        // Rechazar peso igual a cero.
         assertThrows(IllegalArgumentException.class,
-                () -> empresa.agregarLote("E01", new LotePapelYCarton("L02", "Sin peso", 0, false)));
+                () -> new LotePapelYCarton("L02", "Sin peso", 0, false));
 
-        // La entrega solo debe conservar el primer lote.
         assertEquals(1, entrega.getLotes().size());
 
-        registrar("PRUEBA 2: Validación de lotes",
-                "L01 con 5 kg; otro L01; L02 con 0 kg",
-                "las 2 últimas rechazadas; E01 conserva solo 1 lote",
-                "lotes en E01: " + entrega.getLotes().size());
+        registrar(
+                "PRUEBA 2: Validación de lotes",
+                "L01 con 5 kg; repetir L01; crear L02 con 0 kg",
+                "Solo se agrega el primer lote",
+                "Cantidad de lotes: " + entrega.getLotes().size()
+        );
     }
 
-    /
+    // PRUEBA 3: Rechazo de una entrega vacía
+
     @Test
     @DisplayName("Prueba 3: Rechazo de una entrega vacía")
     void pruebaEntregaVacia() {
 
         Entrega entrega = empresa.crearEntrega("E03", "1001", hoy);
 
-        // No debe aceptar una entrega sin lotes.
-        assertThrows(RuntimeException.class, () -> empresa.aceptarEntrega("E03"));
+        // aceptar() devuelve false cuando la entrega está vacía.
+        assertFalse(empresa.aceptarEntrega("E03"));
 
-        // Debe seguir ABIERTA y sin comprobante.
         assertEquals(EstadoEntrega.ABIERTA, entrega.getEstadoEntrega());
         assertNull(entrega.getComprobanteEntrega());
 
-        registrar("PRUEBA 3: Rechazo de una entrega vacía",
-                "crear E03 sin lotes y aceptarla",
-                "rechazada, E03 ABIERTA y sin comprobante",
-                "estado " + entrega.getEstadoEntrega() + "; comprobante " + entrega.getComprobanteEntrega());
+        registrar(
+                "PRUEBA 3: Rechazo de una entrega vacía",
+                "Crear E03 sin lotes e intentar aceptarla",
+                "Debe permanecer ABIERTA y sin comprobante",
+                "Estado: " + entrega.getEstadoEntrega()
+                        + ", comprobante: " + entrega.getComprobanteEntrega()
+        );
     }
 
+    // PRUEBA 4: Aceptación y cálculo de los tres tipos de lote
 
     @Test
-    @DisplayName("Prueba 4: Aceptación y cálculo con los tres tipos de lote")
+    @DisplayName("Prueba 4: Aceptación y cálculo de los lotes")
     void pruebaAceptacionYCalculo() {
 
         Entrega entrega = empresa.crearEntrega("E04", "1001", hoy);
 
-        Lote papel = new LotePapelYCarton("P01", "Papel clasificado", 10, true);
-        Lote metal = new LoteMetal("M01", "Latas", 5, TipoMetal.ALUMINIO);
-        Lote electronico = new LoteResiduoElectronico("R01", "Computadores", 4, 2);
+        LotePapelYCarton papel = new LotePapelYCarton(
+                "P01", "Papel clasificado", 10, true
+        );
+
+        LoteMetal metal = new LoteMetal(
+                "M01", "Latas", 5, TipoMetal.ALUMINIO
+        );
+
+        LoteResiduoElectronico electronico = new LoteResiduoElectronico(
+                "R01", "Computadores", 4, 2
+        );
 
         assertTrue(empresa.agregarLote("E04", papel));
         assertTrue(empresa.agregarLote("E04", metal));
         assertTrue(empresa.agregarLote("E04", electronico));
 
-        empresa.aceptarEntrega("E04");
+        assertTrue(empresa.aceptarEntrega("E04"));
 
-        // Debe pasar a ACEPTADA y tener comprobante.
         assertEquals(EstadoEntrega.ACEPTADA, entrega.getEstadoEntrega());
-        ComprobanteEntrega comprobante = empresa.consultarComprobanteEntrega("E04");
+
+        ComprobanteEntrega comprobante =
+                empresa.consultarComprobanteEntrega("E04");
+
         assertNotNull(comprobante);
 
-        // Valores por lote.
-        assertEquals(6000, papel.calcularValor(), 0.001);
-        assertEquals(11000, metal.calcularValor(), 0.001);
-        assertEquals(7200, electronico.calcularValor(), 0.001);
+        // Valores individuales de los lotes.
+        assertEquals(6000, papel.calcularValor());
+        assertEquals(11000, metal.calcularValor());
+        assertEquals(7200, electronico.calcularValor());
 
-        // Totales del comprobante.
-        assertEquals(19, comprobante.pesoTotalKg(), 0.001);
+        // Valores totales del comprobante.
+        assertEquals(19, comprobante.pesoTotalKg());
         assertEquals(24200, comprobante.valorTotal(), 0.001);
 
-        registrar("PRUEBA 4: Aceptación y cálculo con los tres tipos de lote",
-                "E04 con 10 kg papel clasificado, 5 kg aluminio, 4 kg electrónicos (2 equipos)",
-                "ACEPTADA, 19 kg, $24200 (lotes: $6000, $11000, $7200)",
-                entrega.getEstadoEntrega() + ", " + comprobante.pesoTotalKg() + " kg, $"
-                        + comprobante.valorTotal() + " (lotes: $" + papel.calcularValor() + ", $"
-                        + metal.calcularValor() + ", $" + electronico.calcularValor() + ")");
+        registrar(
+                "PRUEBA 4: Aceptación y cálculo de los lotes",
+                "10 kg papel clasificado, 5 kg aluminio y 4 kg electrónicos",
+                "ACEPTADA, 19 kg y $24200",
+                "Estado: " + entrega.getEstadoEntrega()
+                        + ", peso: " + comprobante.pesoTotalKg()
+                        + " kg, valor: $" + comprobante.valorTotal()
+        );
     }
 
+    // PRUEBA 5: Consulta de etiquetas
 
     @Test
     @DisplayName("Prueba 5: Consulta de etiquetas")
     void pruebaConsultaEtiquetas() {
 
-        // Se prepara la misma entrega aceptada de la prueba 4.
-        empresa.crearEntrega("E04", "1001", hoy);
-        empresa.agregarLote("E04", new LotePapelYCarton("P01", "Papel clasificado", 10, true));
-        empresa.agregarLote("E04", new LoteMetal("M01", "Latas", 5, TipoMetal.ALUMINIO));
-        empresa.agregarLote("E04", new LoteResiduoElectronico("R01", "Computadores", 4, 2));
-        empresa.aceptarEntrega("E04");
+        empresa.crearEntrega("E05", "1001", hoy);
 
-        List<String> etiquetas = empresa.consultarEtiquetas("E04");
+        empresa.agregarLote(
+                "E05",
+                new LotePapelYCarton("P01", "Papel clasificado", 10, true)
+        );
 
-        // Deben ser exactamente dos etiquetas.
+        empresa.agregarLote(
+                "E05",
+                new LoteMetal("M01", "Latas", 5, TipoMetal.ALUMINIO)
+        );
+
+        empresa.agregarLote(
+                "E05",
+                new LoteResiduoElectronico("R01", "Computadores", 4, 2)
+        );
+
+        assertTrue(empresa.aceptarEntrega("E05"));
+
+        List<String> etiquetas = empresa.consultarEtiquetas("E05");
+
+        assertNotNull(etiquetas);
         assertEquals(2, etiquetas.size());
 
-        // Etiqueta del metal: código M01 y tipo ALUMINIO.
-        assertTrue(etiquetas.stream().anyMatch(e -> e.contains("M01") && e.contains("ALUMINIO")));
+        // Etiqueta del metal.
+        assertTrue(etiquetas.stream().anyMatch(
+                e -> e.contains("M01") && e.contains("ALUMINIO")
+        ));
 
-        // Etiqueta del electrónico: código R01 y 2 equipos completos.
-        assertTrue(etiquetas.stream().anyMatch(e -> e.contains("R01") && e.contains("2")));
+        // Etiqueta del residuo electrónico.
+        assertTrue(etiquetas.stream().anyMatch(
+                e -> e.contains("R01") && e.contains("2")
+        ));
 
-        registrar("PRUEBA 5: Consulta de etiquetas",
-                "consultar etiquetas de E04",
-                "exactamente 2 (M01 con ALUMINIO, R01 con 2 equipos)",
-                etiquetas.size() + " etiquetas -> " + etiquetas);
+        registrar(
+                "PRUEBA 5: Consulta de etiquetas",
+                "Consultar las etiquetas de E05",
+                "Dos etiquetas: M01 con ALUMINIO y R01 con 2 equipos",
+                etiquetas.size() + " etiquetas: " + etiquetas
+        );
     }
 }
