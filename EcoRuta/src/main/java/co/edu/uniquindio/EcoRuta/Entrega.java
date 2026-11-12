@@ -6,99 +6,89 @@ import java.util.List;
 
 public class Entrega {
 
-
-
-    private  String codigoEntrega;
+    private String codigoEntrega;
     private LocalDate fechaEntrega;
     private EstadoEntrega estadoEntrega;
     private ArrayList<Lote> lotes;
     private Aportante aportante;
     private ComprobanteEntrega comprobanteEntrega;
-    
-public Entrega(String codigoEntrega, LocalDate fechaEntrega, EstadoEntrega estadoEntrega, Aportante aportante){
-    this.codigoEntrega = codigoEntrega;
-    this.fechaEntrega = fechaEntrega;
-    this.estadoEntrega = estadoEntrega;
-    this.aportante = aportante;
-    this.lotes = new ArrayList<>();
 
-}
-public boolean agregarLote(Lote lote){
-    if(estadoEntrega != EstadoEntrega.ABIERTA){
-        System.out.println("La entrada no esta abierta");
-        return false;
-    }if (existeLote(lote.getCodigo())){
-        System.out.println("Lote existe");
-        return false;
-    }
-    lotes.add(lote);
-    System.out.println("Lote agregado");
-    return true;
-}
 
-public boolean existeLote(String codigo){
-    if(codigo.isBlank() || codigo.equals("-")){
-        return false;
+    public Entrega(String codigoEntrega, LocalDate fechaEntrega, Aportante aportante){
+        this.codigoEntrega = codigoEntrega;
+        this.fechaEntrega = fechaEntrega;
+        this.estadoEntrega = EstadoEntrega.ABIERTA;
+        this.aportante = aportante;
+        this.lotes = new ArrayList<>();
     }
-    for (Lote l : lotes) {
-        if (l.getCodigo().equals(codigo)){
-            return true;
+
+    public boolean agregarLote(Lote lote){
+        if (estadoEntrega != EstadoEntrega.ABIERTA){
+            return false;
         }
+        if (lote.getPesoKg() <= 0){
+            return false;
+        }
+        if (lote.getCodigo() == null || lote.getCodigo().isBlank() || existeLote(lote.getCodigo())){
+            return false;
+        }
+        lotes.add(lote);
+        return true;
     }
-    return false;
-}
+
+    public boolean existeLote(String codigo){
+        for (Lote l : lotes) {
+            if (l.getCodigo().equals(codigo)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int calcularValorTotal(){
+        int total = 0;
+        for (Lote l : lotes){
+            total += l.calcularValor();
+        }
+        return total;
+    }
+
+    public int calucularPesoTotal(){
+        int pesoTotal = 0;
+        for (Lote l : lotes){
+            pesoTotal += l.getPesoKg();
+        }
+        return pesoTotal;
+    }
+
+    public boolean aceptar(){
+        if (estadoEntrega != EstadoEntrega.ABIERTA){
+            return false;
+        }
+        if (lotes.isEmpty()){
+            return false;
+        }
+        comprobanteEntrega = new ComprobanteEntrega(codigoEntrega, aportante.identificacion(),
+                calucularPesoTotal(), calcularValorTotal());
+        estadoEntrega = EstadoEntrega.ACEPTADA;
+        return true;
+    }
+
+    public List<String> consultarEtiquetas() {
+        List<String> etiquetas = new ArrayList<>();
+        for (Lote lote : lotes) {
+            // ¿Este lote firmó el contrato IEtiquetable? (papel y cartón no)
+            if (lote instanceof IEtiquetable) {
+                IEtiquetable etiqueta = (IEtiquetable) lote;
+                etiquetas.add(etiqueta.generarEtiqueta());
+            }
+        }
+        return etiquetas;
+    }
 
     public ComprobanteEntrega getComprobanteEntrega() {
         return comprobanteEntrega;
     }
-
-public double calcularValorTotal(){
-    double total = 0;
-    for (Lote l : lotes){
-        total+= l.calcularValor();
-    }
-    return total;
-}
-
-public int calucularPesoTotal(){
-    int pesoTotal = 0;
-    for (Lote l : lotes){
-        pesoTotal+= l.getPesokg();
-
-    }
-    return pesoTotal;
-}
-public boolean aceptar(){
-    if (estadoEntrega != EstadoEntrega.ABIERTA){
-        return false;
-    }
-    if (lotes.isEmpty()){
-        return false;
-    }
-   comprobanteEntrega = new ComprobanteEntrega(codigoEntrega, aportante.identificacion(), calucularPesoTotal(), calcularValorTotal() );
-    estadoEntrega = EstadoEntrega.ACEPTADA;
-    return true;
-}
-
-
-
-    public List<String> consultarEtiquetas() {
-//Creamos una lista
-        List<String> etiquetas = new ArrayList<>();
-
-        for (Lote lote : lotes) {
- //este codigo pregunt si lote implementa la interface de GenerarEtiquetas
-            if (lote instanceof Etiquetable) {
-// Castea el objeto lote para que tambien pueda utilizar el contrato
-                Etiquetable etiqueta = (Etiquetable) lote;
-
-                etiquetas.add(etiqueta.generarEtiqueta());
-            }
-        }
-
-        return etiquetas;
-    }
-
 
     public LocalDate getFechaEntrega() {
         return fechaEntrega;

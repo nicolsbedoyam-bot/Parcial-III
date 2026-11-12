@@ -13,13 +13,13 @@ public class Empresa {
     private ArrayList<Aportante> aportantes;
     private ComprobanteEntrega comprobanteEntrega;
 
-public  Empresa(String nombre, String nit) {
-    this.nombre = nombre;
-    this.nit = nit;
-    this.entregas = new ArrayList<>();
-    this.aportantes = new ArrayList<>();
+    public  Empresa(String nombre, String nit) {
+        this.nombre = nombre;
+        this.nit = nit;
+        this.entregas = new ArrayList<>();
+        this.aportantes = new ArrayList<>();
 
-}
+    }
 
     public boolean registrarAportante(Aportante aportante) {
 
@@ -36,15 +36,15 @@ public  Empresa(String nombre, String nit) {
     }
 
 
-  public Aportante buscarAportante(String identificacion) {
-    for (Aportante aportante : aportantes) {
-        if (aportante.identificacion().equals(identificacion)){
-            return aportante;
-        }
+    public Aportante buscarAportante(String identificacion) {
+        for (Aportante aportante : aportantes) {
+            if (aportante.identificacion().equals(identificacion)){
+                return aportante;
+            }
 
+        }
+        return null;
     }
-    return null;
-  }
 
     public boolean crearEntrega(String codigoEntrega, String identificacion, LocalDate fecha) {
 
@@ -70,50 +70,51 @@ public  Empresa(String nombre, String nit) {
     }
 
 
-  public Entrega buscarEntrega(String codigoEntrega){
-    for (Entrega entrega : entregas) {
-        if (entrega.getCodigoEntrega().equals(codigoEntrega)){
-            return entrega;
+    public Entrega buscarEntrega(String codigoEntrega){
+        for (Entrega entrega : entregas) {
+            if (entrega.getCodigoEntrega().equals(codigoEntrega)){
+                return entrega;
+            }
         }
+        return null;
     }
-    return null;
-  }
-  public boolean agregarLote(String codigoEntrega, Lote lote) {
+    public boolean agregarLote(String codigoEntrega, Lote lote) {
         if (codigoEntrega == null || codigoEntrega.isBlank() || lote == null) {
             return false;
         }
         if(buscarEntrega(codigoEntrega) == null) {
             return false;
         }
-Entrega entrega = buscarEntrega(codigoEntrega);
+        Entrega entrega = buscarEntrega(codigoEntrega);
         if (entrega == null) {
             return false;
         }
-     entrega.agregarLote(lote);
+        entrega.agregarLote(lote);
+        return true;
     }
 
     public boolean aceptarEntrega(String codigoEntrega){
-    for (Entrega entrega : entregas) {
-        if (entrega.getCodigoEntrega().equals(codigoEntrega)){
-           entrega.aceptar();
+        for (Entrega entrega : entregas) {
+            if (entrega.getCodigoEntrega().equals(codigoEntrega)){
+                entrega.aceptar();
 
+            }
         }
-    }
-    return false;
+        return false;
     }
 
     public ComprobanteEntrega consultarComprobanteEntrega(String codigoEntrega){
-    if (codigoEntrega == null || codigoEntrega.isBlank()) {
-        return null;
-    }
-    if (buscarEntrega(codigoEntrega) == null) {
-        return null;
-    }
-    Entrega entrega = buscarEntrega(codigoEntrega);
-    if (entrega == null) {
-        return null;
-    }
-     return  entrega.getComprobanteEntrega();
+        if (codigoEntrega == null || codigoEntrega.isBlank()) {
+            return null;
+        }
+        if (buscarEntrega(codigoEntrega) == null) {
+            return null;
+        }
+        Entrega entrega = buscarEntrega(codigoEntrega);
+        if (entrega == null) {
+            return null;
+        }
+        return  entrega.getComprobanteEntrega();
 
     }
 
@@ -132,15 +133,15 @@ Entrega entrega = buscarEntrega(codigoEntrega);
         return entrega.consultarEtiquetas();
     }
     public double calcularValorAcumulado(String identificacion){
-    double total = 0;
-   for (Entrega entrega : entregas) {
-       comprobanteEntrega comprobante = entrega.getComprobanteEntrega();
-       if (comprobante != null &&
-               comprobante.identificacionAportante().equals(identificacion))  {
-total +=comprobante.valorTotal();
-       }
-   }
-   return total;
+        double total = 0;
+        for (Entrega entrega : entregas) {
+            ComprobanteEntrega comprobante = entrega.getComprobanteEntrega();
+            if (comprobante != null &&
+                    comprobante.identificacionAportante().equals(identificacion))  {
+                total +=comprobante.valorTotal();
+            }
+        }
+        return total;
     }
 
     public String getNombre() {
@@ -183,6 +184,5 @@ total +=comprobante.valorTotal();
         this.comprobanteEntrega = comprobanteEntrega;
     }
 }
-
 
 
