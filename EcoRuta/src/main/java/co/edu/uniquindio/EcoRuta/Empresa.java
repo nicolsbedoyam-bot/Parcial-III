@@ -94,13 +94,11 @@ public class Empresa {
     }
 
     public boolean aceptarEntrega(String codigoEntrega){
-        for (Entrega entrega : entregas) {
-            if (entrega.getCodigoEntrega().equals(codigoEntrega)){
-                entrega.aceptar();
-
-            }
-        }
-        return false;
+       Entrega entrega = buscarEntrega(codigoEntrega);
+       if(entrega == null){
+           return false;
+       }
+       return  entrega.aceptar();
     }
 
     public ComprobanteEntrega consultarComprobanteEntrega(String codigoEntrega){
